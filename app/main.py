@@ -1,7 +1,13 @@
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.health import router as health_router
+from app.api.internal.errors import (
+    InternalAPIError,
+    internal_api_error_handler,
+    request_validation_error_handler,
+)
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.lifespan import (
@@ -24,6 +30,15 @@ def create_app(
             if lifespan_handler is not None
             else create_lifespan()
         ),
+    )
+
+    app.add_exception_handler(
+        RequestValidationError,
+        request_validation_error_handler,
+    )
+    app.add_exception_handler(
+        InternalAPIError,
+        internal_api_error_handler,
     )
 
     app.add_middleware(
