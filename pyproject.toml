@@ -18,6 +18,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+inference = [
+  "ultralytics-opencv-headless==8.4.101"
+]
 dev = [
   "httpx>=0.27.0",
   "pytest>=8.0.0",

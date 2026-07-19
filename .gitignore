@@ -446,3 +446,5 @@ models/**/*.engine
 # AI inference outputs
 outputs/
 runs/
+
+.venv311/
