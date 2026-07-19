@@ -764,3 +764,90 @@ POST /api/v1/streams/{cctv_id}/frames
 - 사건 후보 판단
 
 두 API를 분리하면 단순 모델 테스트와 실제 관제 분석 로직이 섞이지 않아 유지보수와 성능 관리가 쉬워진다.
+
+---
+
+## 구현 상태 기록: lifespan 및 Health 준비 상태
+
+> 기록일: 2026-07-19
+> 작업 브랜치: `feature/ai-serving-lifespan-health`
+> 현재 단계: 모델 설정 및 파일 경로 검증 완료
+
+### 이번 브랜치 구현 범위
+
+- FastAPI lifespan 시작·종료 처리
+- 애플리케이션 런타임 상태 관리
+- 서버 시작 시 `configs/models.yaml` 로딩
+- 활성 모델 파일 경로 검증
+- 설정 기반 `ModelRegistry` 구성
+- `GET /health/live`
+- `GET /health/ready`
+- 런타임·레지스트리·Health 자동 테스트
+
+### 런타임 상태
+
+| 상태 | 의미 |
+|---|---|
+| `starting` | 애플리케이션 시작 처리 중 |
+| `config_validated` | 모델 설정과 모델 파일 경로 검증 완료 |
+| `ready` | 실제 YOLO 모델과 추론 장치 초기화 완료 |
+| `not_ready` | 시작 또는 추론 준비 과정 실패 |
+
+정상 상태 전환:
+
+```text
+starting
+→ config_validated
+→ ready
+```
+
+### Health API 동작
+
+- `/health/live`는 프로세스 생존 여부만 검사한다.
+- 응답 시간은 ISO 8601 UTC `Z` 형식을 사용한다.
+- `/health/ready`는 실제 추론 요청을 처리할 수 있을 때만 HTTP 200을 반환한다.
+- `config_validated` 상태에서는 실제 추론 미준비로 HTTP 503을 반환한다.
+
+현재 정상 시작 시 준비 상태:
+
+```text
+HTTP 503 Service Unavailable
+runtime_status: config_validated
+config_validated: true
+inference_ready: false
+```
+
+실제 YOLO 모델과 GPU 초기화가 끝난 후에만:
+
+```text
+HTTP 200 OK
+runtime_status: ready
+config_validated: true
+inference_ready: true
+```
+
+### ModelRegistry의 현재 역할
+
+현재 레지스트리는 실제 YOLO 객체가 아니라 활성 모델 설정과 검증된 모델 파일 경로만 보관한다.
+
+### AI 서버와 백엔드 책임 경계
+
+- AI 서버: 모델 검증·로딩·추론·ROI·추적·위험 후보 계산
+- 서비스 백엔드: 인증·사건 저장·중복 병합·관제 판정·출동·알림·감사 로그
+- AI 서버는 서비스 데이터베이스를 직접 수정하지 않는다.
+
+### 이번 단계에서 제외한 작업
+
+- Ultralytics YOLO 실제 객체 생성
+- PyTorch 및 CUDA 초기화
+- GPU 모델 로딩과 워밍업
+- 실제 이미지 추론
+- GPU VRAM 및 FPS 벤치마크
+
+### 검증 결과
+
+- 전체 자동 테스트 20개 통과
+- Ruff 검사 통과
+- `git diff --check` 통과
+- 모델 가중치 Git 추적 없음
+- 기존 `StarletteDeprecationWarning`은 테스트 실패가 아님
