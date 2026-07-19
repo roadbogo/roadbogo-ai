@@ -1,0 +1,28 @@
+[Unit]
+Description=Roadbogo AI FastAPI inference service
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=roadbogo
+Group=roadbogo
+WorkingDirectory=/home/roadbogo/roadbogo-ai
+
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+
+ExecStart=/home/roadbogo/roadbogo-ai/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8010 --workers 1
+
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+KillSignal=SIGTERM
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
