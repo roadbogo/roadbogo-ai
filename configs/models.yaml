@@ -1,0 +1,115 @@
+﻿version: 1
+
+execution:
+  mode: sequential
+  device: cuda:0
+  batch_size: 1
+  half_precision: true
+
+models:
+  - model_code: DEBRIS_DETECTOR
+    display_name: 낙하물 탐지 모델
+    file_path: models/debris/debris_yolov8s_832.pt
+    original_file_name: 낙하물best.pt
+    architecture: yolov8s
+    task: detect
+    input_size: 832
+    confidence_threshold: 0.50
+    iou_threshold: 0.45
+    enabled: true
+
+    classes:
+      0:
+        raw_name: bag
+        class_code: BAG
+        incident_target: true
+      1:
+        raw_name: box
+        class_code: BOX
+        incident_target: true
+      2:
+        raw_name: rock
+        class_code: ROCK
+        incident_target: true
+      3:
+        raw_name: tire
+        class_code: TIRE
+        incident_target: true
+
+  - model_code: PROHIBITED_MOBILITY_DETECTOR
+    display_name: 고속도로 통행 제한 객체 탐지 모델
+    file_path: models/prohibited-mobility/prohibited_mobility_yolo11m_640.pt
+    original_file_name: 비어클v3_best.pt
+    architecture: yolo11m
+    task: detect
+    input_size: 640
+    confidence_threshold: 0.50
+    iou_threshold: 0.45
+    enabled: true
+
+    classes:
+      0:
+        raw_name: Cultivator
+        class_code: CULTIVATOR
+        incident_target: true
+      1:
+        raw_name: Electric Scooter
+        class_code: ELECTRIC_SCOOTER
+        incident_target: true
+      2:
+        raw_name: Excavator
+        class_code: EXCAVATOR
+        incident_target: true
+      3:
+        raw_name: Rear Car
+        class_code: REAR_CAR
+        incident_target: true
+      4:
+        raw_name: Stacker
+        class_code: STACKER
+        incident_target: true
+      5:
+        raw_name: Tractor
+        class_code: TRACTOR
+        incident_target: true
+      6:
+        raw_name: Wheelchair
+        class_code: WHEELCHAIR
+        incident_target: true
+      7:
+        raw_name: car
+        class_code: CAR
+        incident_target: false
+      8:
+        raw_name: person
+        class_code: PERSON
+        incident_target: true
+      9:
+        raw_name: motorcycle
+        class_code: MOTORCYCLE
+        incident_target: true
+
+  - model_code: WILDLIFE_DETECTOR
+    display_name: 야생동물 탐지 모델
+    file_path: models/wildlife/wildlife_yolo11l_640.pt
+    original_file_name: 야생best.pt
+    architecture: yolo11l
+    task: detect
+    input_size: 640
+    confidence_threshold: 0.50
+    iou_threshold: 0.45
+    enabled: true
+
+    classes:
+      0:
+        raw_name: boar
+        class_code: WILD_BOAR
+        incident_target: true
+      1:
+        raw_name: racoon
+        class_code: RACCOON
+        incident_target: true
+      2:
+        raw_name: water_deer
+        class_code: WATER_DEER
+        incident_target: true

@@ -438,3 +438,11 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm+all,flask,django
+# Roadbogo AI model weights
+models/**/*.pt
+models/**/*.onnx
+models/**/*.engine
+
+# AI inference outputs
+outputs/
+runs/
