@@ -18,6 +18,7 @@ class ApplicationRuntimeState:
     model_config: ServingModelConfig | None = None
     model_paths: dict[ModelCode, Path] = field(default_factory=dict)
     startup_error: str | None = None
+    configuration_validated: bool = False
 
     @property
     def is_ready(self) -> bool:
@@ -25,10 +26,7 @@ class ApplicationRuntimeState:
 
     @property
     def is_config_validated(self) -> bool:
-        return self.status in {
-            RuntimeStatus.CONFIG_VALIDATED,
-            RuntimeStatus.READY,
-        }
+        return self.configuration_validated
 
     @property
     def configured_model_count(self) -> int:
@@ -46,6 +44,7 @@ class ApplicationRuntimeState:
         self.model_config = None
         self.model_paths.clear()
         self.startup_error = None
+        self.configuration_validated = False
 
     def set_model_config(
         self,
@@ -62,10 +61,12 @@ class ApplicationRuntimeState:
     def mark_config_validated(self) -> None:
         self.status = RuntimeStatus.CONFIG_VALIDATED
         self.startup_error = None
+        self.configuration_validated = True
 
     def mark_ready(self) -> None:
         self.status = RuntimeStatus.READY
         self.startup_error = None
+        self.configuration_validated = True
 
     def mark_not_ready(
         self,

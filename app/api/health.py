@@ -64,12 +64,15 @@ async def readiness_check(
             "configured_model_count": 0,
             "validated_model_count": 0,
             "registered_model_count": 0,
-            "detail": "Application runtime state is not initialized.",
+            "loaded_model_count": 0,
+            "detail": (
+                "Application runtime state is not initialized."
+            ),
         }
 
     is_ready = (
         runtime_state.is_ready
-        and model_registry.is_configured
+        and model_registry.is_loaded
     )
 
     response.status_code = (
@@ -82,7 +85,9 @@ async def readiness_check(
         "status": "ready" if is_ready else "not_ready",
         "service": settings.app_name,
         "runtime_status": runtime_state.status.value,
-        "config_validated": runtime_state.is_config_validated,
+        "config_validated": (
+            runtime_state.is_config_validated
+        ),
         "inference_ready": is_ready,
         "configured_model_count": (
             runtime_state.configured_model_count
@@ -90,7 +95,12 @@ async def readiness_check(
         "validated_model_count": (
             runtime_state.validated_model_count
         ),
-        "registered_model_count": model_registry.model_count,
+        "registered_model_count": (
+            model_registry.model_count
+        ),
+        "loaded_model_count": (
+            model_registry.loaded_model_count
+        ),
     }
 
     if runtime_state.status is RuntimeStatus.CONFIG_VALIDATED:
@@ -98,11 +108,17 @@ async def readiness_check(
             "Model configuration and files are validated, "
             "but YOLO model and GPU initialization are not complete."
         )
-
     elif runtime_state.startup_error is not None:
-        result["detail"] = "Startup validation failed."
-
+        if runtime_state.is_config_validated:
+            result["detail"] = (
+                "Model configuration was validated, "
+                "but inference initialization failed."
+            )
+        else:
+            result["detail"] = "Startup validation failed."
     elif not is_ready:
-        result["detail"] = "Inference initialization is not complete."
+        result["detail"] = (
+            "Inference initialization is not complete."
+        )
 
     return result
