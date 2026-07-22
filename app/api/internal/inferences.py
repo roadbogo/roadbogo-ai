@@ -218,7 +218,7 @@ async def run_internal_inference(
         raise InternalAPIError(
             status_code=503,
             code="AI_INFERENCE_UNAVAILABLE",
-            message="AI ?? ???? ??? ? ????.",
+            message="AI 추론 서비스를 사용할 수 없습니다.",
             trace_id=context.trace_id,
         )
 
@@ -234,7 +234,7 @@ async def run_internal_inference(
         raise InternalAPIError(
             status_code=400,
             code="AI_INPUT_INVALID",
-            message="?? ?? ???? ???? ????.",
+            message="입력 이미지 요청이 올바르지 않습니다.",
             trace_id=context.trace_id,
             details={
                 "reason": str(error),
@@ -244,7 +244,7 @@ async def run_internal_inference(
         raise InternalAPIError(
             status_code=502,
             code="AI_INPUT_DOWNLOAD_FAILED",
-            message="?? ?? ???? ???? ?????.",
+            message="입력 이미지 다운로드에 실패했습니다.",
             trace_id=context.trace_id,
         ) from error
 
@@ -261,7 +261,7 @@ async def run_internal_inference(
         raise InternalAPIError(
             status_code=400,
             code="AI_INPUT_INVALID",
-            message="?? ?? ???? ???? ????.",
+            message="입력 이미지 요청이 올바르지 않습니다.",
             trace_id=context.trace_id,
             details={
                 "reason": str(error),
@@ -271,14 +271,14 @@ async def run_internal_inference(
         raise InternalAPIError(
             status_code=503,
             code="AI_INFERENCE_UNAVAILABLE",
-            message="AI ?? ???? ??? ? ????.",
+            message="AI 추론 서비스를 사용할 수 없습니다.",
             trace_id=context.trace_id,
         ) from error
     except DetectionServiceError as error:
         raise InternalAPIError(
             status_code=500,
             code="AI_INFERENCE_FAILED",
-            message="AI ?? ??? ??????.",
+            message="AI 추론 처리에 실패했습니다.",
             trace_id=context.trace_id,
         ) from error
 
@@ -300,6 +300,6 @@ async def run_internal_inference(
         raise InternalAPIError(
             status_code=500,
             code="AI_INFERENCE_RESULT_INVALID",
-            message="AI ?? ?? ??? ???? ????.",
+            message="AI 추론 결과 형식이 올바르지 않습니다.",
             trace_id=context.trace_id,
         ) from error
