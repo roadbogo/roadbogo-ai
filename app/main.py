@@ -8,6 +8,7 @@ from app.api.internal.errors import (
     internal_api_error_handler,
     request_validation_error_handler,
 )
+from app.api.internal.router import internal_api_router
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.lifespan import (
@@ -51,6 +52,10 @@ def create_app(
 
     app.include_router(health_router)
     app.include_router(api_router, prefix="/api/v1")
+    app.include_router(
+        internal_api_router,
+        prefix=settings.internal_api_v1_prefix,
+    )
 
     @app.get("/health", tags=["health"])
     async def health_check() -> dict[str, str]:
