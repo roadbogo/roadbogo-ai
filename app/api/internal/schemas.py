@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from enum import StrEnum
-from typing import Self
+from typing import Literal, Self
 from uuid import UUID
 
 from pydantic import (
@@ -167,3 +167,80 @@ class InternalInferenceRequest(BaseModel):
     input: InferenceInputRequest
     tracking: TrackingRequest
     execution: InferenceExecutionRequest
+
+
+
+class InternalBoundingBoxResponse(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+    )
+
+    x: float = Field(ge=0.0, le=1.0)
+    y: float = Field(ge=0.0, le=1.0)
+    width: float = Field(ge=0.0, le=1.0)
+    height: float = Field(ge=0.0, le=1.0)
+
+
+class InternalDetectionResponse(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+    )
+
+    detection_index: int = Field(ge=0)
+    class_index: int = Field(ge=0)
+    raw_name: str
+    class_code: str
+    incident_target: bool
+    confidence: float = Field(ge=0.0, le=1.0)
+    bounding_box: InternalBoundingBoxResponse
+
+
+class InternalModelResultResponse(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+    )
+
+    model_code: ContractModelCode
+    detection_count: int = Field(ge=0)
+    detections: list[InternalDetectionResponse]
+
+
+class InternalImageResponse(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+    )
+
+    width: int = Field(ge=1)
+    height: int = Field(ge=1)
+
+
+class InternalInferenceData(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+    )
+
+    request_id: UUID
+    inference_run_public_id: UUID
+    video_frame_public_id: UUID
+    image: InternalImageResponse
+    model_count: int = Field(ge=0)
+    total_detection_count: int = Field(ge=0)
+    incident_detection_count: int = Field(ge=0)
+    processing_time_ms: int = Field(ge=0)
+    model_results: list[InternalModelResultResponse]
+
+
+class InternalInferenceResponse(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+    )
+
+    success: Literal[True] = True
+    data: InternalInferenceData
+    trace_id: UUID

@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from threading import Lock
 from typing import Any
 
@@ -5,8 +6,10 @@ import cv2
 import numpy as np
 from numpy.typing import NDArray
 
+from app.domain.model import ModelCode
 from app.inference.model_registry import (
     ModelRegistry,
+    ModelRegistryError,
     RegisteredModel,
 )
 from app.schemas.detection import (
@@ -45,6 +48,8 @@ class DetectionService:
         self,
         image_bytes: bytes,
         model_registry: ModelRegistry,
+        *,
+        model_codes: Iterable[ModelCode] | None = None,
     ) -> ImageInferenceResponse:
         image = self._decode_image(image_bytes)
 
@@ -53,11 +58,15 @@ class DetectionService:
                 "Inference models are not ready."
             )
 
+        registered_models = self._resolve_registered_models(
+            model_registry,
+            model_codes,
+        )
         image_height, image_width = image.shape[:2]
         model_results: list[ModelDetectionResult] = []
 
         with self._inference_lock:
-            for registered_model in model_registry.list_models():
+            for registered_model in registered_models:
                 model_results.append(
                     self._run_model(
                         image=image,
@@ -85,6 +94,46 @@ class DetectionService:
             incident_detection_count=incident_detection_count,
             model_results=model_results,
         )
+
+    def _resolve_registered_models(
+        self,
+        model_registry: ModelRegistry,
+        model_codes: Iterable[ModelCode] | None,
+    ) -> tuple[RegisteredModel, ...]:
+        if model_codes is None:
+            return model_registry.list_models()
+
+        requested_codes = tuple(model_codes)
+
+        if not requested_codes:
+            raise DetectionInputError(
+                "At least one inference model must be requested."
+            )
+
+        if len(requested_codes) != len(set(requested_codes)):
+            raise DetectionInputError(
+                "Inference model codes must not contain duplicates."
+            )
+
+        try:
+            registered_models = tuple(
+                model_registry.get(model_code)
+                for model_code in requested_codes
+            )
+        except ModelRegistryError as error:
+            raise DetectionUnavailableError(
+                "A requested inference model is not available."
+            ) from error
+
+        if not all(
+            registered_model.is_loaded
+            for registered_model in registered_models
+        ):
+            raise DetectionUnavailableError(
+                "A requested inference model is not loaded."
+            )
+
+        return registered_models
 
     def _decode_image(
         self,

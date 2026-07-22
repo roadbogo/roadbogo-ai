@@ -189,6 +189,60 @@ def test_detection_service_runs_all_loaded_models() -> None:
         assert options["quantize"] == 16
 
 
+
+def test_detection_service_runs_only_requested_models() -> None:
+    config = load_model_config()
+    registry, fake_models = create_registry(config)
+    requested_codes = [
+        ModelCode.WILDLIFE_DETECTOR,
+        ModelCode.DEBRIS_DETECTOR,
+    ]
+
+    response = DetectionService().predict(
+        create_test_image(),
+        registry,
+        model_codes=requested_codes,
+    )
+
+    assert response.model_count == 2
+    assert response.total_detection_count == 1
+    assert response.incident_detection_count == 1
+    assert [
+        result.model_code
+        for result in response.model_results
+    ] == requested_codes
+
+    assert len(
+        fake_models[
+            ModelCode.WILDLIFE_DETECTOR
+        ].predict_calls
+    ) == 1
+    assert len(
+        fake_models[
+            ModelCode.DEBRIS_DETECTOR
+        ].predict_calls
+    ) == 1
+    assert len(
+        fake_models[
+            ModelCode.PROHIBITED_MOBILITY_DETECTOR
+        ].predict_calls
+    ) == 0
+
+
+def test_detection_service_rejects_empty_model_selection() -> None:
+    config = load_model_config()
+    registry, _ = create_registry(config)
+
+    with pytest.raises(
+        DetectionServiceError,
+        match="At least one inference model",
+    ):
+        DetectionService().predict(
+            create_test_image(),
+            registry,
+            model_codes=[],
+        )
+
 def test_detection_service_rejects_invalid_image() -> None:
     config = load_model_config()
     registry, _ = create_registry(config)
